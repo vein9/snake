@@ -9,13 +9,15 @@ const LEFT = 37
 const UP = 38
 const RIGHT = 39
 const DOWN = 40
-
 class Vector2d {
     constructor(x, y) {
         this.x = x
         this.y = y
     }
 }
+const currentDir = new Vector2d(1, 0)
+
+
 class Snake {
     constructor() {
         this.head = new Vector2d(200, 100)
@@ -72,13 +74,13 @@ class Snake {
         this.clear()
         this.draw()
     }
-
-    eatFood(food) {
+    eat() {
         if (food.pos.x === this.head.x && food.pos.y === this.head.y) {
-            this.grow()
-            food.spawn()
+            return true
         }
+        return false
     }
+
 }
 
 class Food {
@@ -104,7 +106,7 @@ class Food {
         this.clear()
         this.pos.x = this.getRandomNumber()
         this.pos.y = this.getRandomNumber()
-        this.draw(  )
+        this.draw()
     }
 }
 
@@ -122,20 +124,32 @@ food.spawn()
 function getInputKey(e) {
     switch (e.keyCode) {
         case UP:
+            if (currentDir.y === 1) break
             player.velocity.x = 0
             player.velocity.y = -1
+            currentDir.x = 0
+            currentDir.y = -1
             break;
         case DOWN:
+            if (currentDir.y === -1) break
             player.velocity.x = 0
             player.velocity.y = 1
+            currentDir.x = 0
+            currentDir.y = 1
             break;
         case LEFT:
+            if (currentDir.x === 1) break
             player.velocity.x = -1
             player.velocity.y = 0
+            currentDir.x = -1
+            currentDir.y = 0
             break;
         case RIGHT:
+            if (currentDir.x === -1) break
             player.velocity.x = 1
             player.velocity.y = 0
+            currentDir.x = 1
+            currentDir.y = 0
             break;
 
     }
@@ -144,5 +158,8 @@ function getInputKey(e) {
 
 setInterval(() => {
     player.move()
-    player.eatFood(food)
+    if (player.eat()) {
+        player.grow()
+        food.spawn()
+    }
 }, 200);
