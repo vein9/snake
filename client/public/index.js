@@ -209,7 +209,7 @@ function getInputKey(e) {
 }
 
 socket.on('move', moveCoord => {
-    player.speed = moveCoord
+    // player.speed = moveCoord
 })
 
 
