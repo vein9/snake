@@ -1,20 +1,22 @@
 
-const socket = io('https://snake-vein.herokuapp.com/')
+// const socket = io('https://snake-vein.herokuapp.com/')
+const socket = io('http://localhost:5000/')
 
+socket.emit('play')
 socket.on('message', message => {
-
     console.log(`Message from server: ${message}`)
 })
 
 
 let canvas = document.getElementById("canvas")
 let ctx = canvas.getContext('2d')
-const GAME_SIZE = 800
+const UNIT = 40
+const GAME_SIZE = UNIT * 15
 const BACKGROUND_COLOR = 'black'
 canvas.width = canvas.height = GAME_SIZE
 ctx.fillStyle = BACKGROUND_COLOR
 ctx.fillRect(0, 0, GAME_SIZE, GAME_SIZE)
-const UNIT = 40
+
 const LEFT = 37
 const UP = 38
 const RIGHT = 39
@@ -31,12 +33,12 @@ function Coord(x, y) {
 
 class Snake {
     constructor() {
+        this.id
         this.speed = new Coord(1, 0)
         this.body = [
-            new Coord(200, UNIT * 2),
-            new Coord(200 - UNIT, UNIT * 2),
-            new Coord(200 - UNIT - UNIT, UNIT * 2),
-            new Coord(200 - UNIT - UNIT - UNIT, UNIT * 2),
+            new Coord(UNIT * 3, UNIT),
+            new Coord(UNIT * 2, UNIT),
+            new Coord(UNIT * 1, UNIT),
         ]
         this.color = 'white'
     }
@@ -116,7 +118,6 @@ class Snake {
     }
 }
 
-
 class Food {
     constructor() {
         this.x = 0
@@ -150,7 +151,8 @@ class Food {
             }
             return false
         }
-
+        this.x = this.getRandomNumber()
+        this.y = this.getRandomNumber()
         while (checkCollision()) {
             this.x = this.getRandomNumber()
             this.y = this.getRandomNumber()
@@ -162,22 +164,38 @@ class Food {
 
 
 let player = new Snake()
+
 player.draw()
 
 let food = new Food()
 food.spawn(player.body)
 
-setInterval(() => {
+function handleGame() {
+
     player.move()
     if (player.eat(food)) {
         player.grow()
         food.spawn(player.body)
     }
-}, GAME_SPEED)
+
+}
+let game = setInterval(handleGame, GAME_SPEED)
+clearInterval(game)
+
+socket.on('start', (id) => {
+    player.id = id
+    setInterval(handleGame, GAME_SPEED)
+    document.onkeydown = getInputKey
+    alert(player.id)
+})
 
 
+socket.on('new player', (id) => {
+    let newPlayer = new Snake()
+    newPlayer.id = id
+})
 
-document.onkeydown = getInputKey
+
 
 function getInputKey(e) {
     let moveCoord;
@@ -205,11 +223,15 @@ function getInputKey(e) {
             currentDir = RIGHT
             break;
     }
-    socket.emit('move', moveCoord ? moveCoord : player.speed)
+    socket.emit('move', { moveCoord: moveCoord ? moveCoord : player.speed, id: player.id })
 }
 
-socket.on('move', moveCoord => {
-    // player.speed = moveCoord
+socket.on('move', ({ moveCoord, id }) => {
+    console.log(player.id)
+    if (player.id === id)
+        player.speed = moveCoord
 })
+
+
 
 
